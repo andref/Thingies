@@ -1,0 +1,122 @@
+#!/usr/bin/env python
+# encoding: utf-8
+
+
+from datetime import date
+from os import path
+
+import codecs
+import json
+import os
+import re
+import readline
+import shutil
+import sys
+import tempfile
+
+
+PRICE_REGEX = re.compile("^([^0-9]+)([1-9][0-9]*(\.[0-9][0-9])?)$")
+
+
+def get_prices_filename():
+    return path.expanduser("~/Documents/prices.json")
+
+
+def read_prices(filename):
+    if not path.isfile(filename):
+        prices = dict()
+    else:
+        try:
+            with open(filename, mode='rb') as prices_file:
+                prices = json.load(prices_file)
+        except:
+            print('Sorry, I failed to open the prices file! :-(')
+            sys.exit(1)
+    return prices
+
+
+def write_prices(prices, filename):
+    """Write the prices file again, taking care not to overwrite it with
+    garbage in case we have trouble serializing the JSON."""
+
+    try:
+        with tempfile.NamedTemporaryFile(delete=False) as temp:
+            temp_name = temp.name
+            json.dump(prices, temp, encoding='utf-8', indent=2,
+                      separators=(',', ': '), sort_keys=True)
+        os.rename(temp_name, filename)
+    except:
+        print()
+        print('Sorry, I failed to save the prices file! :-(')
+        sys.exit(1)
+
+
+def add_price(product, price):
+    if product in prices:
+        prices[product].append(price)
+    else:
+        prices[product] = [price]
+
+
+def read_next_price():
+    """Get the next product and price from the input. We expect lines
+    like "banana 0.99" or "sugar 1.50". Prices must have a decimal
+    dot. Return the product name and a price entry."""
+
+    line = raw_input('> ')
+
+    m = PRICE_REGEX.match(line)
+    if not m:
+        print('Nope. Try something like: sugar 2.99')
+        return None, None
+
+    try:
+        product = m.group(1).lower().strip()
+        price = float(m.group(2))
+    except ValueError:
+        print('Nope. Prices must be somethin like: 1.99, 2000, 834.50')
+        return None, None
+
+    return product, {'date': date.today().isoformat(), 'price': price}
+
+
+def prepare_readline(prices):
+    # XXX: I don't get why a class works but a function factory doesn't
+    class completer (object):
+        def __init__(self, products):
+            self.products = products
+
+        def __call__(self, text, state):
+            if state == 0:
+                self.matches = []
+                text = text.lower()
+                for product in self.products:
+                    if product.startswith(text):
+                        self.matches.append(product)
+                self.matches.sort()
+            try:
+                return self.matches[state] + ' '
+            except:
+                return None
+
+    readline.set_completer(completer(prices.keys()))
+    readline.parse_and_bind('TAB: complete')
+
+
+if __name__ == '__main__':
+
+    filename = get_prices_filename()
+    prices = read_prices(filename)
+    prepare_readline(prices)
+
+    while True:
+        try:
+            product, price = read_next_price()
+            if product and price:
+                add_price(product, price)
+        except KeyboardInterrupt:
+            write_prices(prices, filename)
+            break
+        except EOFError:
+            write_prices(prices, filename)
+            break
