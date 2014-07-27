@@ -24,15 +24,14 @@ def get_prices_filename():
 
 def read_prices(filename):
     if not path.isfile(filename):
-        prices = dict()
-    else:
-        try:
-            with open(filename, mode='rb') as prices_file:
-                prices = json.load(prices_file)
-        except:
-            print('Sorry, I failed to open the prices file! :-(')
-            sys.exit(1)
-    return prices
+        return dict()
+
+    try:
+        with open(filename, mode='rb') as prices_file:
+            return json.load(prices_file)
+    except:
+        print('Sorry, I failed to open the prices file! :-(')
+        sys.exit(1)
 
 
 def write_prices(prices, filename):
@@ -81,7 +80,12 @@ def read_next_price():
 
 
 def prepare_readline(prices):
-    # XXX: I don't get why a class works but a function factory doesn't
+    """Configures readline to complete with product names when I press
+    tab.
+
+    XXX: I don't get why a callable class works but a function factory
+         does not. The class is way too verbose.
+    """
     class completer (object):
         def __init__(self, products):
             self.products = products
@@ -120,3 +124,5 @@ if __name__ == '__main__':
         except EOFError:
             write_prices(prices, filename)
             break
+        finally:
+            print('')
