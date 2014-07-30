@@ -47,6 +47,7 @@ Whenever I go grocery shopping, I get the receipt and input the prices
 of whatever I bought using this tool and it feeds a JSON file with dates
 and prices.
 
+
 ### To do ###
 
 -   Generate a report after I'm done, telling me what was bought and if

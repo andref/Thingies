@@ -10,7 +10,6 @@ import json
 import os
 import re
 import readline
-import shutil
 import sys
 import tempfile
 
@@ -25,7 +24,6 @@ def get_prices_filename():
 def read_prices(filename):
     if not path.isfile(filename):
         return dict()
-
     try:
         with open(filename, mode='rb') as prices_file:
             return json.load(prices_file)
@@ -73,14 +71,14 @@ def read_next_price():
         product = m.group(1).lower().strip()
         price = float(m.group(2))
     except ValueError:
-        print('Nope. Prices must be somethin like: 1.99, 2000, 834.50')
+        print('Nope. Prices must be something like: 1.99, 2000, 834.50')
         return None, None
 
     return product, {'date': date.today().isoformat(), 'price': price}
 
 
-def prepare_readline(prices):
-    """Configures readline to complete with product names when I press
+def prepare_tab_completion_for(prices):
+    """Configure readline to complete with product names when I press
     tab.
 
     XXX: I don't get why a callable class works but a function factory
@@ -111,7 +109,7 @@ if __name__ == '__main__':
 
     filename = get_prices_filename()
     prices = read_prices(filename)
-    prepare_readline(prices)
+    prepare_tab_completion_for(prices)
 
     while True:
         try:
