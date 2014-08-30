@@ -62,7 +62,10 @@ def read_next_price():
     dot. Return the product name and a price entry."""
 
     line_bytes = raw_input('> ')
-    line = line_bytes.decode(INPUT_ENCODING)
+    line = line_bytes.decode(INPUT_ENCODING).strip()
+
+    if not line:
+        return None, None
 
     m = PRICE_REGEX.match(line)
     if not m:
@@ -92,14 +95,11 @@ def prepare_tab_completion_for(prices):
 
         def __call__(self, text, state):
             if state == 0:
-                self.matches = []
-                text = text.lower()
-                for product in self.products:
-                    if product.startswith(text):
-                        self.matches.append(product)
+                text = text.decode(INPUT_ENCODING).lower()
+                self.matches = [p for p in self.products if p.startswith(text)]
                 self.matches.sort()
             try:
-                return self.matches[state] + ' '
+                return self.matches[state] + u' '
             except:
                 return None
 
